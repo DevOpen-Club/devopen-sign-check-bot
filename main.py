@@ -2,7 +2,7 @@
 Author:Wrundorry @汪嗯个凉
 Licence:The MIT Licence.
 Time:2023/10/8
-Version:
+Version:1.0
 二开请认真阅读完所有注释，不然这个屎山代码会跑不起来。有问题上交 Issues 由开发者处理！
 
 二次开发常用：
