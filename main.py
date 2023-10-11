@@ -2,7 +2,7 @@
 Author:Wrundorry @汪嗯个凉
 Licence:The MIT Licence.
 Time:2023/10/8
-Version:1.0
+Version:1.1 数据库下载1.0版本
 二开请认真阅读完所有注释，不然这个屎山代码会跑不起来。有问题上交 Issues 由开发者处理！
 
 二次开发常用：
@@ -21,6 +21,9 @@ miniPush相关：
 发起提现：devopen_check_money_out
 同意提现申请：devopen_admin_money_t  PS:t代表true，相反f代表false
 拒绝提现申请：devopen_admin_money_f
+
+更新日志：
+v1.1 支持终端打印高亮提示
 '''
 import base64
 import json
@@ -32,27 +35,30 @@ import traceback
 
 from websocket import create_connection, WebSocketConnectionClosedException
 from datetime import datetime, date
+import colorama
+from colorama import init,Fore, Back, Style
+init()
 
-TOKEN = '001bde1cb07f24830a64ff776bf91c48d7b62dd39cfa020bcb10ff************************' # 机器人Toekn
-BOT_ID = '46174862*****832' # 机器人ID
+TOKEN = '001bde1cb07**********************************66bd64559a225daf477c6526e7837' # 机器人Toekn
+BOT_ID = '4617***********32' # 机器人ID
 BASE_URL = 'https://a1.fanbook.mobi/api'
 
 DB_NAME="check" # 数据库名
 DB_HOST="127.0.0.1" # 数据库主机
 DB_USER="check" # 数据库用户名
-DB_PWD="lyh11****7" # 数据库密码
+DB_PWD="lyh1***27" # 数据库密码
 
-PLAY_CHAT="541****83882533888" # 签到频道ID
+PLAY_CHAT="5415446********88" # 签到频道ID
 ONE_MONEY="0.01" #单次签到获得余额
 DOOR="1" # 提现门槛（元）
 SSF="" # 手续费（未支持）
-ADMIN="3752743*************20" # 管理员长ID
+ADMIN="375274******8887120" # 管理员长ID
 TABLE_NAME="devopen_users"
 
 def on_message(message): # 消息接收
     s = message.decode('utf8')
     obj = json.loads(s)
-    print(obj)
+    print(f"{Fore.CYAN}[WS广播]{Style.RESET_ALL}"+str(obj)+"")
     if obj["action"]=="push": # 推送
         if obj["data"]["channel_id"]==PLAY_CHAT: # 来自签到频道
             content_type=obj["data"]["content"] #获得推送类型
@@ -64,6 +70,7 @@ def on_message(message): # 消息接收
                 content_data=content_data["text"] # 解析并得到文本内容
                 if "${@!"+BOT_ID+"}" in content_data: # 提及@了机器人
                     if content_data=="${@!"+BOT_ID+"}${/签到打卡}": # 是签到打卡的指令
+                        print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}触发打卡指令")
                         user_id=obj["data"]["user_id"] # 用户Fanbook UserID
                         fanbookid = obj["data"]["author"]["username"] # 用户FanbookID
                         nickname = obj["data"]["author"]["nickname"] # 用户昵称
@@ -79,6 +86,7 @@ def on_message(message): # 消息接收
                         cursor.close()
                         conn.close()
                         if result: # 用户在数据表内
+                            print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}用户已注册")
                             result=result[0] # 得到用户所有信息的数据
                             uid=result[0] # 数据库独立id
                             fb_userid=result[1] # fanbook中的userid
@@ -90,7 +98,7 @@ def on_message(message): # 消息接收
                             date_today = datetime.strptime(fb_toady, "%Y%m%d").date() # 将上一次打卡时间解析为可读类型
                             current_date = date.today() # 获得今日时间
                             if date_today == current_date: # 上一次打卡时间与今日时间相同
-                                print("已经打卡") # 信息
+                                print(f"{Fore.YELLOW}[信息]{Style.RESET_ALL}用户已打卡")
                                 # 发送频道提示
                                 url = "https://a1.fanbook.mobi/api/bot/" + TOKEN + "/sendMessage" 
                                 headers = {'content-type': "application/json;charset=utf-8"}
@@ -101,7 +109,8 @@ def on_message(message): # 消息接收
                                 })  
                                 postreturn = requests.post(url, data=jsonfile, headers=headers)
                             else: # 今日未打卡
-                                print("没有打卡") # 信息
+                                print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}用户打卡成功")# 信息
+                                
                                 fb_total=int(fb_total)+1 # 累计打卡天数+1
                                 fb_money=float(fb_money)+float(ONE_MONEY) # 累计余额加设定余额
                                 today=current_date.strftime("%Y%m%d") # 将今日时间格式化成数据库内记载格式
@@ -136,14 +145,15 @@ def on_message(message): # 消息接收
                                     "parse_mode": "Fanbook"
                                 })  
                                 postreturn = requests.post(url, data=jsonfile, headers=headers)
-                                print("完成")
+                                print(f"{Fore.BLUE}[提示]{Style.RESET_ALL}任务完成")
 
                         else: # 用户不在数据库内
-                            print("未注册") # 信息
-                            print(nickname) # 信息
+                            print(f"{Fore.YELLOW}[信息]{Style.RESET_ALL}用户未注册")
+                            print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}昵称："+nickname+"") # 信息
                             current_date = date.today() # 今日日期
                             today=current_date.strftime("%Y%m%d") # 格式化今日日期
                             try: # 尝试插入用户数据
+                                print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}用户注册完成")
                                 cnx = mysql.connector.connect(user=DB_USER, password=DB_PWD,
                                     host='127.0.0.1', database=DB_NAME)
                                 cursor = cnx.cursor()
@@ -159,6 +169,8 @@ def on_message(message): # 消息接收
                                 cursor.close()
                                 cnx.close()
                             except: # 无法插入，因为昵称包含特殊字符
+                                print(f"{Fore.RED}[错误]{Style.RESET_ALL}用户用户名包含特殊字符")
+                                
                                 cnx = mysql.connector.connect(user=DB_USER, password=DB_PWD,
                                     host='127.0.0.1', database=DB_NAME)
                                 cursor = cnx.cursor()
@@ -174,6 +186,7 @@ def on_message(message): # 消息接收
                                 # 关闭连接
                                 cursor.close()
                                 cnx.close()
+                                print(f"{Fore.YELLOW}[信息]{Style.RESET_ALL}已特殊处理并注册成功")
                             # 频道发送通知
                             url = "https://a1.fanbook.mobi/api/bot/" + TOKEN + "/sendMessage"  # 注意令牌
                             headers = {'content-type': "application/json;charset=utf-8"}
@@ -183,8 +196,9 @@ def on_message(message): # 消息接收
                                 "parse_mode": "Fanbook"
                             }) 
                             postreturn = requests.post(url, data=jsonfile, headers=headers)
-                            print("完成") # 信息
+                            print(f"{Fore.BLUE}[提示]{Style.RESET_ALL}任务完成") # 信息
                     elif "${@!"+BOT_ID+"}${/银行系统}": # 是银行功能的指令
+                        print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}触发银行指令")
                         user_id=obj["data"]["user_id"] # 用户的Fanbook UserID
                         fanbookid = obj["data"]["author"]["username"] # 用户FanbookID
                         nickname = obj["data"]["author"]["nickname"] # 用户昵称
@@ -200,6 +214,7 @@ def on_message(message): # 消息接收
                         cursor.close()
                         conn.close()
                         if result: # 仅注册后可用
+                            print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}用户已注册")
                             result=result[0] # 得到用户所有信息的数据
                             uid=result[0] # 数据库独立id
                             fb_userid=result[1] # fanbook中的userid
@@ -229,8 +244,9 @@ def on_message(message): # 消息接收
                                                     
                             })  
                             postreturn = requests.post(url, data=jsonfile, headers=headers)
+                            print(f"{Fore.BLUE}[提示]{Style.RESET_ALL}任务完成") # 信息
     elif obj["action"]=="miniPush": # 内联键盘穿透消息
-        print("按钮回复") # 信息
+        print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}接收内联键盘消息") # 信息 # 信息
         try: # 尝试获取穿透信息
             # 这一段都是用来得到code_from的json解析，不要动它。我花了好长时间才解析出来的。
             data = obj["data"]
@@ -244,7 +260,7 @@ def on_message(message): # 消息接收
 
             # 开始解析是不是机器人需要的穿透信息
             if data["come_from"] == "devopen_check_money_out": # devopen_check_money_out信息：用户发起提现申请，管理员查阅审批
-                print("提现申请") # 信息
+                print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}用户提现申请") # 信息
                 
                 chat_id=data["chat_id"] # 频道ID
                 user_id=data["user_id"] # 用户的 Fanbook UserID
@@ -262,6 +278,7 @@ def on_message(message): # 消息接收
                     cursor.close()
                     conn.close()
                     if result: # 用户信息返回
+                        print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}用户已注册")
                         result=result[0] # 得到用户所有信息的数据
                         uid=result[0] # 数据库独立id
                         fb_userid=result[1] # fanbook中的userid
@@ -274,8 +291,10 @@ def on_message(message): # 消息接收
                         current_date = date.today() # 获得今日时间
                         img_pay=result[7] # 支付码
                         if img_pay!=None: # 上传了支付码
+                            print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}用户已上传收款码")
                             if float(DOOR)<float(fb_money): # 达到了提现门槛
-                                print("已经提交收款码") # 信息
+                                print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}用户达到提现门槛")
+                                
                                 # 获得管理员的私聊频道用户发送批准信息
                                 url = "https://a1.fanbook.mobi/api/bot/" + TOKEN + "/getPrivateChat"  
                                 headers = {'content-type': "application/json;charset=utf-8"}
@@ -317,7 +336,9 @@ def on_message(message): # 消息接收
                                     "parse_mode": "Fanbook"
                                 })  
                                 postreturn = requests.post(url, data=jsonfile, headers=headers)
+                                print(f"{Fore.BLUE}[提示]{Style.RESET_ALL}任务完成") # 信息
                             else: # 没有达到提现门槛
+                                print(f"{Fore.YELLOW}[信息]{Style.RESET_ALL}用户未达到门槛")
                                 # 发送频道通知
                                 url = "https://a1.fanbook.mobi/api/bot/" + TOKEN + "/sendMessage" 
                                 headers = {'content-type': "application/json;charset=utf-8"}
@@ -327,8 +348,9 @@ def on_message(message): # 消息接收
                                     "parse_mode": "Fanbook"
                                 })  
                                 postreturn = requests.post(url, data=jsonfile, headers=headers)
+                                print(f"{Fore.BLUE}[提示]{Style.RESET_ALL}任务完成") # 信息
                         else: # 用户没有上传支付码
-                            print("无法验证收款码") # 信息
+                            print(f"{Fore.YELLOW}[信息]{Style.RESET_ALL}用户无法验证用户收款码") # 信息
                             # 发送频道通知
                             url = "https://a1.fanbook.mobi/api/bot/" + TOKEN + "/sendMessage" 
                             headers = {'content-type': "application/json;charset=utf-8"}
@@ -338,8 +360,10 @@ def on_message(message): # 消息接收
                                 "parse_mode": "Fanbook"
                             })  
                             postreturn = requests.post(url, data=jsonfile, headers=headers)
+                            print(f"{Fore.BLUE}[提示]{Style.RESET_ALL}任务完成") # 信息
                             # 注：当前版本不支持在线上传支付码
             elif data["come_from"]=="devopen_admin_money_t": # 同意用户提现申请
+                print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}管理员同意提现") # 信息
                 user_id=data["user_id"] # 用户Fanbook UserID
                 money=data["money"] # 用户申请提现的余额
                 # 更新数据库数据
@@ -363,8 +387,10 @@ def on_message(message): # 消息接收
                 fb_total=result[5] # 累计打卡次数
                 fb_money=result[6] # 累计余额
                 img_pay=result[7] # 支付码
-                print("剩余",fb_money)
-                print("提现",money)
+                
+                print(f"{Fore.BLUE}[信息]{Style.RESET_ALL}用户剩余："+str(fb_money)+"") # 信息
+                
+                print(f"{Fore.BLUE}[信息]{Style.RESET_ALL}用户提现："+str(money)+"") # 信息
                 fb_money=float(fb_money)-float(money) # 设置提现后余额
                 # 更新数据库内容
                 conn = mysql.connector.connect(
@@ -436,7 +462,9 @@ def on_message(message): # 消息接收
                     "parse_mode": "Fanbook"
                 })  
                 postreturn = requests.post(url, data=jsonfile, headers=headers)
+                print(f"{Fore.BLUE}[提示]{Style.RESET_ALL}任务完成") # 信息
             elif data["come_from"]=="devopen_admin_money_f": # 拒绝用户提现申请
+                print(f"{Fore.GREEN}[信息]{Style.RESET_ALL}管理员拒绝用户提现申请") # 信息
                 user_id=data["user_id"] # 用户Fanbook UserID
                 money=data["money"] # 用户申请提现的余额
                 # 获得管理员私聊频道
@@ -475,6 +503,7 @@ def on_message(message): # 消息接收
                     "parse_mode": "Fanbook"
                 })  
                 postreturn = requests.post(url, data=jsonfile, headers=headers)
+                print(f"{Fore.BLUE}[提示]{Style.RESET_ALL}任务完成") # 信息
                 
         except Exception as e:
             # 为了防止接受其他机器人的信息导致失败，直接忽略
