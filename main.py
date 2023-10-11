@@ -33,20 +33,20 @@ import traceback
 from websocket import create_connection, WebSocketConnectionClosedException
 from datetime import datetime, date
 
-TOKEN = '001bde1cb07f24830a64ff776bf91c48d7b62dd39cfa020bcb10ff435fd8db223ee66bd64559a225daf477c6526e7837' # 机器人Toekn
-BOT_ID = '461748625211768832' # 机器人ID
+TOKEN = '001bde1cb07f24830a64ff776bf91c48d7b62dd39cfa020bcb10ff************************' # 机器人Toekn
+BOT_ID = '46174862*****832' # 机器人ID
 BASE_URL = 'https://a1.fanbook.mobi/api'
 
 DB_NAME="check" # 数据库名
 DB_HOST="127.0.0.1" # 数据库主机
 DB_USER="check" # 数据库用户名
-DB_PWD="lyh110927" # 数据库密码
+DB_PWD="lyh11****7" # 数据库密码
 
-PLAY_CHAT="541544673882533888" # 签到频道ID
+PLAY_CHAT="541****83882533888" # 签到频道ID
 ONE_MONEY="0.01" #单次签到获得余额
 DOOR="1" # 提现门槛（元）
 SSF="" # 手续费（未支持）
-ADMIN="375274330516357120" # 管理员长ID
+ADMIN="3752743*************20" # 管理员长ID
 TABLE_NAME="devopen_users"
 
 def on_message(message): # 消息接收
